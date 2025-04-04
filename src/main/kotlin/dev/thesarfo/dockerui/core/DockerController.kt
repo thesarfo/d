@@ -10,6 +10,17 @@ import org.springframework.web.bind.annotation.*
 @Controller
 class DockerController(val dockerService: DockerService) {
 
+    @GetMapping("/")
+    fun dashboard(model: Model): String {
+        val stats = dockerService.getContainerStats()
+        val events = dockerService.getRecentContainerEvents()
+
+        model.addAttribute("stats", stats)
+        model.addAttribute("events", events)
+        return "dashboard"
+    }
+
+
     @GetMapping("/containers")
     fun listContainers(model: Model): String {
         val containers: List<Container> = dockerService.listContainers()
