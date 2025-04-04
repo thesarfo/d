@@ -1,9 +1,8 @@
 package dev.thesarfo.dockerui.core
 
 import org.springframework.stereotype.Service
-import dev.thesarfo.dockerui.domain.Container;
+import dev.thesarfo.dockerui.domain.Container
 import com.fasterxml.jackson.databind.ObjectMapper
-
 
 @Service
 class DockerService {

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Container List</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Docker Containers</h1>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Image</th>
+            <th>Command</th>
+            <th>Status</th>
+            <th>Ports</th>
+            <th>Names</th>
+            <th>Created</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Thymeleaf loop to display containers -->
+        <tr th:each="container : ${containers}">
+            <td th:text="${container.id}"></td>
+            <td th:text="${container.image}"></td>
+            <td th:text="${container.command}"></td>
+            <td th:text="${container.status}"></td>
+            <td th:text="${container.ports}"></td>
+            <td th:text="${container.names}"></td>
+            <td th:text="${container.createdAt}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
