@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container Details</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Container Details</h1>
+    <p><strong>ID:</strong> <span th:text="${container.id}"></span></p>
+    <p><strong>Name:</strong> <span th:text="${container.names}"></span></p>
+    <p><strong>Image:</strong> <span th:text="${container.image}"></span></p>
+    <p><strong>Command:</strong> <span th:text="${container.command}"></span></p>
+    <p><strong>Status:</strong> <span th:text="${container.status}"></span></p>
+    <p><strong>Ports:</strong> <span th:text="${container.ports}"></span></p>
+    <p><strong>Created:</strong> <span th:text="${container.created}"></span></p>
+
+    <a href="/containers" class="btn btn-secondary">Back to List</a>
+
+    <button th:if="${container.status.contains('Up')}"
+            th:onclick="stopContainer([[${container.id}]])"
+            class="btn btn-danger">Stop Container</button>
+
+    <button th:if="${container.status.contains('Exited')}"
+            th:onclick="startContainer([[${container.id}]])"
+            class="btn btn-success">Start Container</button>
+
+    <button class="btn btn-secondary" onclick="fetchLogs()">View Logs</button>
+
+    <div id="logs-container" class="mt-3 p-3 bg-light border" style="display: none; max-height: 300px; overflow-y: auto;">
+        <pre id="logs-content">Click "View Logs" to load logs...</pre>
+    </div>
+</div>
+
+
+<script>
+    function startContainer(containerId) {
+        fetch(`/containers/start/${containerId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let container = $(`[th\\:data-status="${containerId}"]`);
+                    container.data("status", "Up");
+                    container.find(".btn-success").replaceWith('<button class="btn btn-danger" onclick="stopContainer(\'' + containerId + '\')">Stop</button>');
+                    container.addClass("border-success").removeClass("border-danger");
+                }
+            });
+    }
+
+    function stopContainer(containerId) {
+        fetch(`/containers/stop/${containerId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let container = $(`[th\\:data-status="${containerId}"]`);
+                    container.data("status", "Exited");
+                    container.find(".btn-danger").replaceWith('<button class="btn btn-success" onclick="startContainer(\'' + containerId + '\')">Start</button>');
+                    container.addClass("border-danger").removeClass("border-success");
+                }
+            });
+    }
+
+    function fetchLogs() {
+        let containerId = window.location.pathname.split("/").pop();
+
+        fetch(`/containers/${containerId}/logs`)
+            .then(response => response.text())
+            .then(logs => {
+                document.getElementById("logs-content").textContent = logs;
+                document.getElementById("logs-container").style.display = "block";
+            })
+            .catch(error => {
+                document.getElementById("logs-content").textContent = "Error fetching logs.";
+                console.error("Error:", error);
+            });
+    }
+
+</script>
+</body>
+</html>

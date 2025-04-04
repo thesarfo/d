@@ -1,39 +1,94 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docker Container List</title>
+    <title>Docker UI</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 <div class="container mt-5">
-    <h1>Docker Containers</h1>
-    <table class="table table-bordered">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Image</th>
-            <th>Command</th>
-            <th>Status</th>
-            <th>Ports</th>
-            <th>Names</th>
-            <th>Created</th>
-        </tr>
-        </thead>
-        <tbody>
-        <!-- Thymeleaf loop to display containers -->
-        <tr th:each="container : ${containers}">
-            <td th:text="${container.id}"></td>
-            <td th:text="${container.image}"></td>
-            <td th:text="${container.command}"></td>
-            <td th:text="${container.status}"></td>
-            <td th:text="${container.ports}"></td>
-            <td th:text="${container.names}"></td>
-            <td th:text="${container.createdAt}"></td>
-        </tr>
-        </tbody>
-    </table>
+    <h1 class="text-center">Docker Containers</h1>
+
+    <!-- Filter Buttons -->
+    <div class="mb-4">
+        <button type="button" class="btn btn-outline-primary btn-animated filter-btn" data-filter="all">All</button>
+        <button type="button" class="btn btn-outline-success btn-animated filter-btn" data-filter="running">Active</button>
+        <button type="button" class="btn btn-outline-danger btn-animated filter-btn" data-filter="stopped">Stopped</button>
+    </div>
+
+    <!-- Container Cards -->
+    <div class="row">
+        <div class="col-md-4 mb-3" th:each="container : ${containers}" th:data-status="${container.status}">
+            <div class="card shadow border-2"
+                 th:classappend="${container.status.contains('Up')} ? 'border-success' : 'border-danger'">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${container.names}"></h5>
+                    <p class="card-text"><strong>Image:</strong> <span th:text="${container.image}"></span></p>
+                    <p class="card-text"><strong>Status:</strong> <span th:text="${container.status}"></span></p>
+
+                    <!-- View Details -->
+                    <a th:href="@{/containers/{id}(id=${container.id})}" class="btn btn-info">View Details</a>
+
+                    <!-- Start / Stop Button -->
+                    <button th:if="${container.status.contains('Up')}"
+                            th:onclick="stopContainer([[${container.id}]])"
+                            class="btn btn-danger">Stop</button>
+
+                    <button th:if="${container.status.contains('Exited')}"
+                            th:onclick="startContainer([[${container.id}]])"
+                            class="btn btn-success">Start</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<script>
+    $(".filter-btn").click(function() {
+        let filter = $(this).data("filter");
+
+        $(".col-md-4").each(function() {
+            let status = $(this).data("status");
+
+            if (filter === "all" ||
+                (filter === "running" && status.includes("Up")) ||
+                (filter === "stopped" && status.includes("Exited"))) {
+                $(this).fadeIn();
+            } else {
+                $(this).fadeOut();
+            }
+        });
+    });
+
+
+    function startContainer(containerId) {
+        fetch(`/containers/start/${containerId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let container = $(`[th\\:data-status="${containerId}"]`);
+                    container.data("status", "Up");
+                    container.find(".btn-success").replaceWith('<button class="btn btn-danger" onclick="stopContainer(\'' + containerId + '\')">Stop</button>');
+                    container.addClass("border-success").removeClass("border-danger");
+                }
+            });
+    }
+
+    function stopContainer(containerId) {
+        fetch(`/containers/stop/${containerId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let container = $(`[th\\:data-status="${containerId}"]`);
+                    container.data("status", "Exited");
+                    container.find(".btn-danger").replaceWith('<button class="btn btn-success" onclick="startContainer(\'' + containerId + '\')">Start</button>');
+                    container.addClass("border-danger").removeClass("border-success");
+                }
+            });
+    }
+</script>
 </body>
 </html>
