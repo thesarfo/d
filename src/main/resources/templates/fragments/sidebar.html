@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <style th:fragment="styles">
+        :root {
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 70px;
+            --sidebar-bg: #212529;
+            --sidebar-color: #f8f9fa;
+            --sidebar-hover: #2c3034;
+            --sidebar-active: #0d6efd;
+        }
+
+        .wrapper {
+            display: flex;
+            width: 100%;
+            align-items: stretch;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 999;
+            background: var(--sidebar-bg);
+            color: var(--sidebar-color);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+        }
+
+        .sidebar.collapsed .hide-on-collapse {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-link {
+            text-align: center;
+            padding: 15px 0;
+        }
+
+        .sidebar.collapsed .sidebar-link i {
+            margin-right: 0;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-menu {
+            display: flex;
+            flex-direction: column;
+            padding: 10px 0;
+        }
+
+        .sidebar-link {
+            padding: 12px 20px;
+            color: var(--sidebar-color);
+            text-decoration: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar-link:hover {
+            background: var(--sidebar-hover);
+            color: white;
+        }
+
+        .sidebar-link.active {
+            background: var(--sidebar-active);
+            color: white;
+        }
+
+        .sidebar-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            top: 10px;
+            right: -15px;
+            width: 30px;
+            height: 30px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .sidebar.collapsed .toggle-btn i {
+            transform: rotate(180deg);
+        }
+
+        #content {
+            width: calc(100% - var(--sidebar-width));
+            margin-left: var(--sidebar-width);
+            transition: all 0.3s;
+            min-height: 100vh;
+        }
+
+        .sidebar.collapsed + #content {
+            width: calc(100% - var(--sidebar-collapsed-width));
+            margin-left: var(--sidebar-collapsed-width);
+        }
+
+        .content-wrapper {
+            padding: 20px;
+        }
+
+        /* Media query for mobile */
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: calc(-1 * var(--sidebar-width));
+            }
+
+            .sidebar.collapsed {
+                margin-left: 0;
+                width: var(--sidebar-width);
+            }
+
+            .sidebar.collapsed .hide-on-collapse {
+                display: block;
+            }
+
+            #content {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .sidebar.collapsed + #content {
+                margin-left: var(--sidebar-width);
+                width: calc(100% - var(--sidebar-width));
+            }
+        }
+    </style>
+</head>
+<body>
+<nav th:fragment="sidebar" id="sidebar" class="sidebar">
+    <button class="toggle-btn" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="sidebar-header p-3">
+        <h4 class="logo-text mb-0">Docker UI</h4>
+        <p class="text-muted small hide-on-collapse">Management Console</p>
+    </div>
+
+    <div class="sidebar-menu">
+        <a href="/dashboard" class="sidebar-link" id="nav-dashboard">
+            <i class="fas fa-tachometer-alt"></i>
+            <span class="hide-on-collapse">Dashboard</span>
+        </a>
+        <a href="/containers" class="sidebar-link" id="nav-containers">
+            <i class="fas fa-box"></i>
+            <span class="hide-on-collapse">Containers</span>
+        </a>
+        <a href="/images" class="sidebar-link" id="nav-images">
+            <i class="fas fa-image"></i>
+            <span class="hide-on-collapse">Images</span>
+        </a>
+        <a href="/volumes" class="sidebar-link" id="nav-volumes">
+            <i class="fas fa-database"></i>
+            <span class="hide-on-collapse">Volumes</span>
+        </a>
+        <a href="/networks" class="sidebar-link" id="nav-networks">
+            <i class="fas fa-network-wired"></i>
+            <span class="hide-on-collapse">Networks</span>
+        </a>
+        <a href="/settings" class="sidebar-link" id="nav-settings">
+            <i class="fas fa-cog"></i>
+            <span class="hide-on-collapse">Settings</span>
+        </a>
+    </div>
+
+    <div class="sidebar-footer mt-auto p-3">
+        <div class="system-info hide-on-collapse">
+            <small class="text-muted">Docker v20.10.12</small><br>
+            <small class="text-muted">Engine running</small>
+        </div>
+    </div>
+</nav>
+
+<script th:fragment="scripts">
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const path = window.location.pathname;
+
+        if (path.includes('/dashboard')) {
+            document.getElementById('nav-dashboard').classList.add('active');
+        } else if (path.includes('/containers')) {
+            document.getElementById('nav-containers').classList.add('active');
+        } else if (path.includes('/images')) {
+            document.getElementById('nav-images').classList.add('active');
+        } else if (path.includes('/volumes')) {
+            document.getElementById('nav-volumes').classList.add('active');
+        } else if (path.includes('/networks')) {
+            document.getElementById('nav-networks').classList.add('active');
+        } else if (path.includes('/settings')) {
+            document.getElementById('nav-settings').classList.add('active');
+        }
+
+        const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (sidebarCollapsed) {
+            document.getElementById('sidebar').classList.add('collapsed');
+        }
+    });
+</script>
+</body>
+</html>

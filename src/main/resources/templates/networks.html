@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Networks</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style th:replace="~{fragments/sidebar :: styles}"></style>
+</head>
+<body>
+<div class="wrapper">
+    <!-- Include the sidebar -->
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <!-- Page Content -->
+    <div id="content">
+        <div class="content-wrapper">
+            <div class="container">
+                <h1 class="mb-4">Docker Networks</h1>
+
+                <!-- Create Network Form -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Create New Network</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="create-network-form" class="row g-3">
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" id="network-name" placeholder="Network name" required>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary">Create Network</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Network List -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>Network ID</th>
+                            <th>Name</th>
+                            <th>Driver</th>
+                            <th>Scope</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="network : ${networks}">
+                            <td th:text="${network.id}"></td>
+                            <td th:text="${network.name}"></td>
+                            <td th:text="${network.driver}"></td>
+                            <td th:text="${network.scope}"></td>
+                            <td>
+                                <button class="btn btn-sm btn-info mr-1 view-details" th:attr="data-id=${network.id}">
+                                    <i class="fas fa-info-circle"></i> Details
+                                </button>
+                                <button class="btn btn-sm btn-danger remove-network" th:attr="data-id=${network.id}">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Network Details Modal -->
+                <div class="modal fade" id="networkDetailsModal" tabindex="-1" role="dialog" aria-labelledby="networkDetailsModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="networkDetailsModalLabel">Network Details</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="network-details-content">
+                                    <p class="text-center">Loading network details...</p>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include sidebar scripts -->
+<script th:replace="~{fragments/sidebar :: scripts}"></script>
+
+<!-- Bootstrap JS for modals -->
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- Page specific scripts -->
+<script>
+    // Create network function
+    $(document).ready(function() {
+        $('#create-network-form').submit(function(e) {
+            e.preventDefault();
+
+            const networkName = $('#network-name').val();
+
+            $.ajax({
+                url: '/networks/create',
+                type: 'POST',
+                data: { name: networkName },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Network created successfully');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while creating the network');
+                }
+            });
+        });
+
+        // Set up event listeners using data attributes
+        $('.view-details').click(function() {
+            viewNetworkDetails($(this).data('id'));
+        });
+
+        $('.remove-network').click(function() {
+            removeNetwork($(this).data('id'));
+        });
+    });
+
+    // View network details function
+    function viewNetworkDetails(networkId) {
+        $('#network-details-content').html('<p class="text-center">Loading network details...</p>');
+        $('#networkDetailsModal').modal('show');
+
+        $.ajax({
+            url: '/networks/' + networkId + '/details',
+            type: 'GET',
+            success: function(data) {
+                let detailsHtml = '<div class="container">';
+
+                // Basic info
+                detailsHtml += '<h6>Basic Information</h6>';
+                detailsHtml += '<div class="row mb-3">';
+                detailsHtml += '<div class="col-md-4"><strong>ID:</strong> ' + data.id + '</div>';
+                detailsHtml += '<div class="col-md-4"><strong>Name:</strong> ' + data.name + '</div>';
+                detailsHtml += '<div class="col-md-4"><strong>Created:</strong> ' + data.created + '</div>';
+                detailsHtml += '</div>';
+
+                // Network info
+                detailsHtml += '<h6>Network Details</h6>';
+                detailsHtml += '<div class="row mb-3">';
+                detailsHtml += '<div class="col-md-4"><strong>Driver:</strong> ' + data.driver + '</div>';
+                detailsHtml += '<div class="col-md-4"><strong>Scope:</strong> ' + data.scope + '</div>';
+                detailsHtml += '<div class="col-md-4"><strong>Internal:</strong> ' + data.internal + '</div>';
+                detailsHtml += '</div>';
+
+                // IPAM info
+                if (data.ipam) {
+                    detailsHtml += '<h6>IPAM Configuration</h6>';
+                    detailsHtml += '<div class="row mb-3">';
+                    detailsHtml += '<div class="col-md-4"><strong>Driver:</strong> ' + data.ipam.driver + '</div>';
+                    detailsHtml += '</div>';
+
+                    if (data.ipam.config && data.ipam.config.length > 0) {
+                        detailsHtml += '<h6>IPAM Config</h6>';
+                        detailsHtml += '<ul>';
+                        data.ipam.config.forEach(config => {
+                            if (config.subnet) detailsHtml += '<li><strong>Subnet:</strong> ' + config.subnet + '</li>';
+                            if (config.gateway) detailsHtml += '<li><strong>Gateway:</strong> ' + config.gateway + '</li>';
+                        });
+                        detailsHtml += '</ul>';
+                    }
+                }
+
+                // Container connections
+                if (data.containers && Object.keys(data.containers).length > 0) {
+                    detailsHtml += '<h6>Connected Containers</h6>';
+                    detailsHtml += '<table class="table table-sm">';
+                    detailsHtml += '<thead><tr><th>Container ID</th><th>Name</th><th>IPv4 Address</th><th>IPv6 Address</th><th>MAC Address</th></tr></thead>';
+                    detailsHtml += '<tbody>';
+
+                    for (const [containerId, containerInfo] of Object.entries(data.containers)) {
+                        detailsHtml += '<tr>';
+                        detailsHtml += '<td>' + containerId.substring(0, 12) + '</td>';
+                        detailsHtml += '<td>' + containerInfo.name + '</td>';
+                        detailsHtml += '<td>' + (containerInfo.ipv4Address || 'N/A') + '</td>';
+                        detailsHtml += '<td>' + (containerInfo.ipv6Address || 'N/A') + '</td>';
+                        detailsHtml += '<td>' + (containerInfo.macAddress || 'N/A') + '</td>';
+                        detailsHtml += '</tr>';
+                    }
+
+                    detailsHtml += '</tbody></table>';
+                } else {
+                    detailsHtml += '<p>No containers connected to this network.</p>';
+                }
+
+                detailsHtml += '</div>';
+
+                $('#network-details-content').html(detailsHtml);
+            },
+            error: function() {
+                $('#network-details-content').html('<div class="alert alert-danger">Error loading network details</div>');
+            }
+        });
+    }
+
+    // Remove network function
+    function removeNetwork(networkId) {
+        if (confirm('Are you sure you want to remove this network?')) {
+            $.ajax({
+                url: '/networks/' + networkId,
+                type: 'DELETE',
+                success: function(response) {
+                    if (response.success) {
+                        alert('Network removed successfully');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while removing the network');
+                }
+            });
+        }
+    }
+</script>
+</body>
+</html>

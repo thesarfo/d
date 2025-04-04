@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker Images</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style th:replace="~{fragments/sidebar :: styles}"></style>
+</head>
+<body>
+<div class="wrapper">
+  <!-- Include the sidebar -->
+  <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+  <!-- Page Content -->
+  <div id="content">
+    <div class="content-wrapper">
+      <div class="container">
+        <h1 class="mb-4">Docker Images</h1>
+
+        <!-- Pull Image Form -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Pull New Image</h5>
+          </div>
+          <div class="card-body">
+            <form id="pull-image-form" class="row g-3">
+              <div class="col-md-8">
+                <input type="text" class="form-control" id="image-name" placeholder="Image name (e.g. nginx:latest)" required>
+              </div>
+              <div class="col-md-4">
+                <button type="submit" class="btn btn-primary">Pull Image</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Image List -->
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-dark">
+            <tr>
+              <th>Repository</th>
+              <th>Tag</th>
+              <th>Image ID</th>
+              <th>Created</th>
+              <th>Size</th>
+              <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="image : ${images}">
+              <td th:text="${image.repository}"></td>
+              <td th:text="${image.tag}"></td>
+              <td th:text="${image.id}"></td>
+              <td th:text="${image.created}"></td>
+              <td th:text="${image.size}"></td>
+              <td>
+                <button class="btn btn-sm btn-danger remove-image" th:attr="data-id=${image.id}">
+                  <i class="fas fa-trash"></i> Remove
+                </button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include sidebar scripts -->
+<script th:replace="~{fragments/sidebar :: scripts}"></script>
+
+<!-- Page specific scripts -->
+<script>
+  // Pull image function
+  $(document).ready(function() {
+    $('#pull-image-form').submit(function(e) {
+      e.preventDefault();
+
+      const imageName = $('#image-name').val();
+
+      $.ajax({
+        url: '/images/pull',
+        type: 'POST',
+        data: { imageName: imageName },
+        success: function(response) {
+          if (response.success) {
+            alert('Image pulled successfully');
+            location.reload();
+          } else {
+            alert('Error: ' + response.message);
+          }
+        },
+        error: function() {
+          alert('An error occurred while pulling the image');
+        }
+      });
+    });
+
+    // Set up event listener for remove button
+    $('.remove-image').click(function() {
+      removeImage($(this).data('id'));
+    });
+  });
+
+  // Remove image function
+  function removeImage(imageId) {
+    if (confirm('Are you sure you want to remove this image?')) {
+      $.ajax({
+        url: '/images/' + imageId,
+        type: 'DELETE',
+        success: function(response) {
+          if (response.success) {
+            alert('Image removed successfully');
+            location.reload();
+          } else {
+            alert('Error: ' + response.message);
+          }
+        },
+        error: function() {
+          alert('An error occurred while removing the image');
+        }
+      });
+    }
+  }
+</script>
+</body>
+</html>
