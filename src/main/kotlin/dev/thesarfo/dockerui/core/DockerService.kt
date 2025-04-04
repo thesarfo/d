@@ -13,13 +13,19 @@ class DockerService {
     }
 
     fun listContainers(): List<Container> {
-        val output = runCommand("docker", "ps", "--format", "{{json .}}")
+        val output = runCommand("docker", "ps", "-a", "--format", "{{json .}}")
         return output.lines()
             .filter { it.isNotBlank() }
             .map { json -> ObjectMapper().readValue(json, Container::class.java) }
     }
 
     fun startContainer(containerId: String) = runCommand("docker", "start", containerId)
+
     fun stopContainer(containerId: String) = runCommand("docker", "stop", containerId)
+
     fun removeContainer(containerId: String) = runCommand("docker", "rm", containerId)
+
+    fun getContainerLogs(containerId: String): String {
+        return runCommand("docker", "logs", "--tail", "100", containerId) // Fetch last 100 lines
+    }
 }

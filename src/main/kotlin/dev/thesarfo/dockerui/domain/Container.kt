@@ -4,7 +4,7 @@ package dev.thesarfo.dockerui.domain
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
-@JsonIgnoreProperties(ignoreUnknown = true)  // Ignore unknown fields, just in case
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class Container(
     @JsonProperty("ID") val id: String,
     @JsonProperty("Image") val image: String,

@@ -2,15 +2,13 @@ package dev.thesarfo.dockerui.core
 
 
 import dev.thesarfo.dockerui.domain.Container
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.*
 
 @Controller
 class DockerController(val dockerService: DockerService) {
-
-//    @GetMapping
-//    fun list() = dockerService.listContainers()
 
     @GetMapping("/containers")
     fun listContainers(model: Model): String {
@@ -19,12 +17,29 @@ class DockerController(val dockerService: DockerService) {
         return "index"
     }
 
-    @PostMapping("/{id}/start")
-    fun start(@PathVariable id: String) = dockerService.startContainer(id)
+    @GetMapping("/containers/{id}")
+    fun containerDetails(@PathVariable id: String, model: Model): String {
+        val container = dockerService.listContainers().find { it.id == id }
+        model.addAttribute("container", container)
+        return "container-details"
+    }
 
-    @PostMapping("/{id}/stop")
-    fun stop(@PathVariable id: String) = dockerService.stopContainer(id)
+    @GetMapping("/containers/{id}/logs")
+    fun getContainerLogs(@PathVariable id: String): ResponseEntity<String> {
+        val logs = dockerService.getContainerLogs(id)
+        return ResponseEntity.ok(logs)
+    }
 
-    @PostMapping("/{id}/remove")
-    fun remove(@PathVariable id: String) = dockerService.removeContainer(id)
+
+    @PostMapping("/containers/start/{id}")
+    fun startContainer(@PathVariable id: String): ResponseEntity<String> {
+        dockerService.startContainer(id)
+        return ResponseEntity.ok("Container started")
+    }
+
+    @PostMapping("/containers/stop/{id}")
+    fun stopContainer(@PathVariable id: String): ResponseEntity<String> {
+        dockerService.stopContainer(id)
+        return ResponseEntity.ok("Container stopped")
+    }
 }
