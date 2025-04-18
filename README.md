@@ -5,4 +5,4 @@ So this is pretty much: a light web-based UI for managing Docker — containers,
 Doesn’t require any special setup, just needs the docker engine. Basically, if you can run `docker ps` in your terminal, you can run this.
 
 
-<img src="./video/ezgif-5c522de893047c.gif">
+![Docker UI Demo](video/ezgif-5c522de893047c.gif)
